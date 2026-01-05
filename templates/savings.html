@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block title %}Savings Calculator - InvestIQ{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem;">
+        <i class="fas fa-piggy-bank"></i> Savings Calculator
+    </h1>
+    <p style="color: var(--gray); font-size: 1.1rem;">Calculate Your Optimal Financial Allocation</p>
+</div>
+
+{% set savings = user.monthly_income - user.monthly_expenses %}
+{% set savings_rate = (savings / user.monthly_income * 100) if user.monthly_income > 0 else 0 %}
+
+<!-- Current Financial Stats -->
+<div class="stats-grid">
+    <div class="stat-card" style="animation-delay: 0.1s;">
+        <div class="stat-label">Monthly Income</div>
+        <div class="stat-value" style="color: #10B981;">₹{{ "{:,.0f}".format(user.monthly_income) }}</div>
+    </div>
+    
+    <div class="stat-card" style="animation-delay: 0.2s;">
+        <div class="stat-label">Monthly Expenses</div>
+        <div class="stat-value" style="color: #EF4444;">₹{{ "{:,.0f}".format(user.monthly_expenses) }}</div>
+    </div>
+    
+    <div class="stat-card" style="animation-delay: 0.3s;">
+        <div class="stat-label">Monthly Savings</div>
+        <div class="stat-value" style="color: #3B82F6;">₹{{ "{:,.0f}".format(savings) }}</div>
+    </div>
+    
+    <div class="stat-card" style="animation-delay: 0.4s;">
+        <div class="stat-label">Savings Rate</div>
+        <div class="stat-value" style="color: #F59E0B;">{{ "{:.1f}".format(savings_rate) }}%</div>
+    </div>
+</div>
+
+{% if savings > 0 %}
+{% set emergency_fund = savings * 0.30 %}
+{% set investments = savings * 0.50 %}
+{% set discretionary = savings * 0.20 %}
+{% set emergency_target = user.monthly_expenses * 6 %}
+
+<!-- Recommended Allocation -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+    <div class="card">
+        <div class="card-header">
+            <div class="card-icon" style="background: linear-gradient(135deg, #10B981, #059669);">
+                <i class="fas fa-lightbulb"></i>
+            </div>
+            <div class="card-title">Recommended Allocation</div>
+        </div>
+        
+        <div style="margin-top: 1.5rem;">
+            <div style="margin-bottom: 1.5rem; padding: 1rem; background: linear-gradient(135deg, #D1FAE5, #A7F3D0); border-radius: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-weight: 600; color: #065F46;">Emergency Fund (30%)</div>
+                        <div style="font-size: 1.5rem; font-weight: 800; color: #059669; margin-top: 0.5rem;">
+                            ₹{{ "{:,.0f}".format(emergency_fund) }}
+                        </div>
+                    </div>
+                    <div style="font-size: 2rem; color: #059669;">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem; padding: 1rem; background: linear-gradient(135deg, #DBEAFE, #BFDBFE); border-radius: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-weight: 600; color: #1E40AF;">Investments (50%)</div>
+                        <div style="font-size: 1.5rem; font-weight: 800; color: #2563EB; margin-top: 0.5rem;">
+                            ₹{{ "{:,.0f}".format(investments) }}
+                        </div>
+                    </div>
+                    <div style="font-size: 2rem; color: #2563EB;">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem; padding: 1rem; background: linear-gradient(135deg, #FEF3C7, #FDE68A); border-radius: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-weight: 600; color: #92400E;">Discretionary (20%)</div>
+                        <div style="font-size: 1.5rem; font-weight: 800; color: #D97706; margin-top: 0.5rem;">
+                            ₹{{ "{:,.0f}".format(discretionary) }}
+                        </div>
+                    </div>
+                    <div style="font-size: 2rem; color: #D97706;">
+                        <i class="fas fa-shopping-bag"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="padding: 1rem; background: linear-gradient(135deg, #E0E7FF, #C7D2FE); border-radius: 10px; text-align: center;">
+                <div style="font-weight: 600; color: #3730A3;">Emergency Fund Target (6 months)</div>
+                <div style="font-size: 1.8rem; font-weight: 800; color: #4F46E5; margin-top: 0.5rem;">
+                    ₹{{ "{:,.0f}".format(emergency_target) }}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <div class="card-icon" style="background: linear-gradient(135deg, #8B5CF6, #7C3AED);">
+                <i class="fas fa-chart-pie"></i>
+            </div>
+            <div class="card-title">Allocation Breakdown</div>
+        </div>
+        
+        <canvas id="allocationChart" style="margin-top: 1.5rem;"></canvas>
+        
+        <div style="margin-top: 2rem; padding: 1.5rem; background: #F3F4F6; border-radius: 10px;">
+            <h4 style="margin-bottom: 1rem; color: var(--dark);">💡 Smart Tips</h4>
+            <ul style="list-style: none; padding: 0; margin: 0;">
+                <li style="margin-bottom: 0.75rem; display: flex; align-items: start; gap: 0.5rem;">
+                    <i class="fas fa-check-circle" style="color: #10B981; margin-top: 0.25rem;"></i>
+                    <span>Build emergency fund before aggressive investing</span>
+                </li>
+                <li style="margin-bottom: 0.75rem; display: flex; align-items: start; gap: 0.5rem;">
+                    <i class="fas fa-check-circle" style="color: #10B981; margin-top: 0.25rem;"></i>
+                    <span>Diversify investments across different assets</span>
+                </li>
+                <li style="display: flex; align-items: start; gap: 0.5rem;">
+                    <i class="fas fa-check-circle" style="color: #10B981; margin-top: 0.25rem;"></i>
+                    <span>Review and rebalance portfolio quarterly</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Savings History -->
+{% if history %}
+<div class="card" style="margin-top: 2rem;">
+    <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #F59E0B, #D97706);">
+            <i class="fas fa-history"></i>
+        </div>
+        <div class="card-title">Savings History</div>
+    </div>
+    
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #F3F4F6;">
+                    <th style="padding: 1rem; text-align: left; font-weight: 600;">Month</th>
+                    <th style="padding: 1rem; text-align: right; font-weight: 600;">Income</th>
+                    <th style="padding: 1rem; text-align: right; font-weight: 600;">Expenses</th>
+                    <th style="padding: 1rem; text-align: right; font-weight: 600;">Savings</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in history %}
+                <tr style="border-bottom: 1px solid #E5E7EB;">
+                    <td style="padding: 1rem;">{{ record.month_year }}</td>
+                    <td style="padding: 1rem; text-align: right; color: #10B981; font-weight: 600;">
+                        ₹{{ "{:,.0f}".format(record.income) }}
+                    </td>
+                    <td style="padding: 1rem; text-align: right; color: #EF4444; font-weight: 600;">
+                        ₹{{ "{:,.0f}".format(record.expenses) }}
+                    </td>
+                    <td style="padding: 1rem; text-align: right; color: #3B82F6; font-weight: 600;">
+                        ₹{{ "{:,.0f}".format(record.savings) }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('allocationChart');
+    if (ctx) {
+        new Chart(ctx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Emergency Fund (30%)', 'Investments (50%)', 'Discretionary (20%)'],
+                datasets: [{
+                    data: [{{ emergency_fund }}, {{ investments }}, {{ discretionary }}],
+                    backgroundColor: [
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(245, 158, 11, 0.8)'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            font: {
+                                size: 14,
+                                weight: '600'
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.parsed;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return context.label + ': ₹' + value.toLocaleString('en-IN');
+                            }
+                        }
+                    }
+                },
+                animation: {
+                    animateRotate: true,
+                    animateScale: true,
+                    duration: 1500
+                }
+            }
+        });
+    }
+});
+</script>
+
+{% else %}
+<div class="card" style="margin-top: 2rem; text-align: center; padding: 3rem;">
+    <div style="font-size: 4rem; color: #EF4444; margin-bottom: 1rem;">
+        <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    <h2 style="color: var(--dark); margin-bottom: 1rem;">Expenses Exceed Income</h2>
+    <p style="color: var(--gray); font-size: 1.1rem; margin-bottom: 2rem;">
+        Focus on reducing expenses or increasing income to start saving
+    </p>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-success">
+        <i class="fas fa-edit"></i> Update Profile
+    </a>
+</div>
+{% endif %}
+
+{% endblock %}

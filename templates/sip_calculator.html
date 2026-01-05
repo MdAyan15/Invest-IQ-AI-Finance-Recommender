@@ -1,0 +1,405 @@
+{% extends "base.html" %}
+
+{% block title %}SIP Calculator - InvestIQ{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem;">
+        <i class="fas fa-calculator"></i> SIP Calculator
+    </h1>
+    <p style="color: var(--gray); font-size: 1.1rem;">Calculate Your Investment Growth with Systematic Investment Plans</p>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+    <!-- Input Section -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-icon" style="background: linear-gradient(135deg, #10B981, #059669);">
+                <i class="fas fa-edit"></i>
+            </div>
+            <div class="card-title">Enter SIP Details</div>
+        </div>
+        
+        <form id="sipForm">
+            <div class="form-group">
+                <label class="form-label">
+                    Monthly SIP Amount (₹)
+                    <span id="sipAmount" style="float: right; color: #10B981; font-weight: 700;">5,000</span>
+                </label>
+                <input 
+                    type="range" 
+                    id="monthlySip" 
+                    name="monthly_sip" 
+                    min="500" 
+                    max="100000" 
+                    step="500" 
+                    value="5000"
+                    class="range-slider"
+                >
+                <div style="display: flex; justify-content: space-between; color: var(--gray); font-size: 0.875rem; margin-top: 0.5rem;">
+                    <span>₹500</span>
+                    <span>₹1,00,000</span>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">
+                    Expected Annual Return (%)
+                    <span id="returnRate" style="float: right; color: #3B82F6; font-weight: 700;">12.0%</span>
+                </label>
+                <input 
+                    type="range" 
+                    id="expectedReturn" 
+                    name="expected_return" 
+                    min="1" 
+                    max="30" 
+                    step="0.5" 
+                    value="12"
+                    class="range-slider"
+                >
+                <div style="display: flex; justify-content: space-between; color: var(--gray); font-size: 0.875rem; margin-top: 0.5rem;">
+                    <span>1%</span>
+                    <span>30%</span>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">
+                    Investment Period (Years)
+                    <span id="timePeriod" style="float: right; color: #F59E0B; font-weight: 700;">10</span>
+                </label>
+                <input 
+                    type="range" 
+                    id="years" 
+                    name="time_period" 
+                    min="1" 
+                    max="40" 
+                    step="1" 
+                    value="10"
+                    class="range-slider"
+                >
+                <div style="display: flex; justify-content: space-between; color: var(--gray); font-size: 0.875rem; margin-top: 0.5rem;">
+                    <span>1 Year</span>
+                    <span>40 Years</span>
+                </div>
+            </div>
+            
+            <button type="button" onclick="calculateSIP()" class="btn btn-success" style="width: 100%;">
+                <i class="fas fa-chart-line"></i> Calculate Returns
+            </button>
+        </form>
+    </div>
+    
+    <!-- Results Section -->
+    <div class="card" id="resultsCard" style="display: none;">
+        <div class="card-header">
+            <div class="card-icon" style="background: linear-gradient(135deg, #3B82F6, #2563EB);">
+                <i class="fas fa-chart-pie"></i>
+            </div>
+            <div class="card-title">Investment Results</div>
+        </div>
+        
+        <div class="stats-grid" style="grid-template-columns: 1fr;">
+            <div class="stat-card">
+                <div class="stat-label">Total Investment</div>
+                <div class="stat-value" id="totalInvested" style="color: #3B82F6;">₹0</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">Expected Returns</div>
+                <div class="stat-value" id="totalReturns" style="color: #10B981;">₹0</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">Maturity Amount</div>
+                <div class="stat-value" id="maturityAmount" style="color: #F59E0B;">₹0</div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 2rem;">
+            <canvas id="sipChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Growth Chart -->
+<div class="card" id="growthCard" style="margin-top: 2rem; display: none;">
+    <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #8B5CF6, #7C3AED);">
+            <i class="fas fa-chart-area"></i>
+        </div>
+        <div class="card-title">Year-wise Growth Projection</div>
+    </div>
+    
+    <canvas id="growthChart"></canvas>
+</div>
+
+<style>
+.range-slider {
+    width: 100%;
+    height: 8px;
+    border-radius: 5px;
+    background: linear-gradient(90deg, #10B981, #3B82F6);
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.range-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.range-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+}
+
+.range-slider::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    border: none;
+}
+</style>
+
+<script>
+let sipChart, growthChart;
+
+// Update slider values in real-time
+document.getElementById('monthlySip').addEventListener('input', function() {
+    document.getElementById('sipAmount').textContent = parseInt(this.value).toLocaleString('en-IN');
+});
+
+document.getElementById('expectedReturn').addEventListener('input', function() {
+    document.getElementById('returnRate').textContent = parseFloat(this.value).toFixed(1) + '%';
+});
+
+document.getElementById('years').addEventListener('input', function() {
+    document.getElementById('timePeriod').textContent = this.value;
+});
+
+function calculateSIP() {
+    const monthlySip = parseFloat(document.getElementById('monthlySip').value);
+    const expectedReturn = parseFloat(document.getElementById('expectedReturn').value);
+    const timePeriod = parseInt(document.getElementById('years').value);
+    
+    if (typeof showLoading === 'function') {
+        showLoading('Calculating your investment...');
+    }
+    
+    setTimeout(() => {
+        const monthlyRate = expectedReturn / 12 / 100;
+        const months = timePeriod * 12;
+        
+        let futureValue;
+        if (monthlyRate > 0) {
+            futureValue = monthlySip * (((1 + monthlyRate) ** months - 1) / monthlyRate) * (1 + monthlyRate);
+        } else {
+            futureValue = monthlySip * months;
+        }
+        
+        const totalInvested = monthlySip * months;
+        const totalReturns = futureValue - totalInvested;
+        
+        // Display results with animation
+        document.getElementById('resultsCard').style.display = 'block';
+        document.getElementById('growthCard').style.display = 'block';
+        
+        animateNumber('totalInvested', totalInvested);
+        animateNumber('totalReturns', totalReturns);
+        animateNumber('maturityAmount', futureValue);
+        
+        // Create pie chart
+        createPieChart(totalInvested, totalReturns);
+        
+        // Create growth chart
+        createGrowthChart(monthlySip, monthlyRate, timePeriod);
+        
+        if (typeof hideLoading === 'function') {
+            hideLoading();
+        }
+        
+        // Scroll to results
+        document.getElementById('resultsCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 1000);
+}
+
+function animateNumber(elementId, targetValue) {
+    const element = document.getElementById(elementId);
+    const duration = 1500;
+    const steps = 60;
+    const increment = targetValue / steps;
+    let current = 0;
+    
+    const timer = setInterval(() => {
+        current += increment;
+        if (current >= targetValue) {
+            current = targetValue;
+            clearInterval(timer);
+        }
+        element.textContent = '₹' + Math.floor(current).toLocaleString('en-IN');
+    }, duration / steps);
+}
+
+function createPieChart(invested, returns) {
+    const ctx = document.getElementById('sipChart');
+    if (!ctx) return;
+    
+    if (sipChart) {
+        sipChart.destroy();
+    }
+    
+    sipChart = new Chart(ctx.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Invested Amount', 'Returns'],
+            datasets: [{
+                data: [invested, returns],
+                backgroundColor: [
+                    'rgba(59, 130, 246, 0.8)',
+                    'rgba(16, 185, 129, 0.8)'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        font: {
+                            size: 14,
+                            weight: '600'
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ₹' + context.parsed.toLocaleString('en-IN');
+                        }
+                    }
+                }
+            },
+            animation: {
+                animateRotate: true,
+                animateScale: true
+            }
+        }
+    });
+}
+
+function createGrowthChart(monthlySip, monthlyRate, years) {
+    const ctx = document.getElementById('growthChart');
+    if (!ctx) return;
+    
+    if (growthChart) {
+        growthChart.destroy();
+    }
+    
+    const labels = [];
+    const investedData = [];
+    const totalData = [];
+    
+    for (let year = 1; year <= years; year++) {
+        labels.push('Year ' + year);
+        const months = year * 12;
+        const invested = monthlySip * months;
+        
+        let fv;
+        if (monthlyRate > 0) {
+            fv = monthlySip * (((1 + monthlyRate) ** months - 1) / monthlyRate) * (1 + monthlyRate);
+        } else {
+            fv = invested;
+        }
+        
+        investedData.push(Math.round(invested));
+        totalData.push(Math.round(fv));
+    }
+    
+    growthChart = new Chart(ctx.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Invested Amount',
+                    data: investedData,
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                },
+                {
+                    label: 'Total Value',
+                    data: totalData,
+                    borderColor: 'rgba(16, 185, 129, 1)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        padding: 20,
+                        font: {
+                            size: 14,
+                            weight: '600'
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ₹' + context.parsed.y.toLocaleString('en-IN');
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            if (value >= 100000) {
+                                return '₹' + (value / 100000).toFixed(1) + 'L';
+                            }
+                            return '₹' + value.toLocaleString('en-IN');
+                        }
+                    }
+                }
+            },
+            animation: {
+                duration: 2000,
+                easing: 'easeInOutQuart'
+            }
+        }
+    });
+}
+</script>
+{% endblock %}

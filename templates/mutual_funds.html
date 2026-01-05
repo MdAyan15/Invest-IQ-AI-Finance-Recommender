@@ -1,0 +1,373 @@
+{% extends "base.html" %}
+
+{% block title %}Mutual Funds - InvestIQ{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem;">
+        <i class="fas fa-briefcase"></i> Mutual Fund Recommender
+    </h1>
+    <p style="color: var(--gray); font-size: 1.1rem;">Personalized Fund Recommendations</p>
+</div>
+
+<!-- Search Section -->
+<div class="card">
+    <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #10B981, #059669);">
+            <i class="fas fa-search"></i>
+        </div>
+        <div class="card-title">Search Mutual Funds</div>
+    </div>
+    
+    <div class="form-group">
+        <input 
+            type="text" 
+            id="searchInput" 
+            class="form-input" 
+            placeholder="Search by Fund Name or AMC (e.g., HDFC, SBI, Axis)"
+            onkeyup="searchFunds()"
+        >
+    </div>
+    
+    <div id="fundsList" style="margin-top: 1.5rem; max-height: 500px; overflow-y: auto; overflow-x: hidden;">
+        <div style="text-align: center; padding: 2rem; color: var(--gray);">
+            <i class="fas fa-info-circle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+            <p>Start typing to search for mutual funds</p>
+        </div>
+    </div>
+</div>
+
+<!-- Fund Details Section -->
+<div id="fundDetails" style="display: none; margin-top: 2rem;">
+    <div class="card">
+        <div class="card-header">
+            <div class="card-icon" style="background: linear-gradient(135deg, #3B82F6, #2563EB);">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="card-title" id="fundName">Fund Details</div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Fund House</div>
+                <div class="stat-value" id="fundHouse" style="font-size: 1.2rem;">-</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">Current NAV</div>
+                <div class="stat-value" id="currentNav">-</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">Risk Level</div>
+                <div id="riskBadge">-</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">Category</div>
+                <div class="stat-value" id="fundCategory" style="font-size: 1.2rem;">-</div>
+            </div>
+        </div>
+        
+        <!-- Returns Section -->
+        <div style="margin-top: 2rem;">
+            <h3 style="margin-bottom: 1rem;">📈 Historical Returns (CAGR)</h3>
+            <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="stat-card">
+                    <div class="stat-label">1 Year</div>
+                    <div class="stat-value" id="returns1y" style="color: #10B981;">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">3 Years</div>
+                    <div class="stat-value" id="returns3y" style="color: #3B82F6;">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">5 Years</div>
+                    <div class="stat-value" id="returns5y" style="color: #F59E0B;">-</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- NAV History -->
+        <div style="margin-top: 2rem;">
+            <h3 style="margin-bottom: 1rem;">📜 Recent NAV History</h3>
+            <div class="table-container" style="max-height: 400px; overflow-y: auto; overflow-x: auto;">
+                <table id="navTable" style="width: 100%; border-collapse: collapse; min-width: 500px;">
+                    <thead style="position: sticky; top: 0; background: #F3F4F6; z-index: 10;">
+                        <tr style="background: #F3F4F6;">
+                            <th style="padding: 1rem; text-align: left; font-weight: 600;">Date</th>
+                            <th style="padding: 1rem; text-align: right; font-weight: 600;">NAV</th>
+                        </tr>
+                    </thead>
+                    <tbody id="navTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tip Section -->
+<div class="card" style="margin-top: 2rem; background: linear-gradient(135deg, #DBEAFE, #BFDBFE);">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="font-size: 2rem; color: #2563EB;">
+            <i class="fas fa-lightbulb"></i>
+        </div>
+        <div>
+            <h4 style="color: #1E40AF; margin-bottom: 0.5rem;">💡 Pro Tip</h4>
+            <p style="color: #1E3A8A; margin: 0;">Direct plans have lower expense ratios compared to regular plans. Always look for 'Direct' in the fund name for better returns.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+let allFunds = [];
+let currentFund = null;
+
+// Fetch all funds on page load
+window.addEventListener('DOMContentLoaded', async function() {
+    try {
+        showLoading('Loading mutual funds database...');
+        const response = await fetch('https://api.mfapi.in/mf');
+        allFunds = await response.json();
+        hideLoading();
+    } catch (error) {
+        console.error('Error fetching funds:', error);
+        hideLoading();
+        alert('Error loading mutual funds. Please refresh the page.');
+    }
+});
+
+function searchFunds() {
+    const searchTerm = document.getElementById('searchInput').value.toUpperCase();
+    const fundsList = document.getElementById('fundsList');
+    
+    if (searchTerm.length < 2) {
+        fundsList.innerHTML = `
+            <div style="text-align: center; padding: 2rem; color: var(--gray);">
+                <i class="fas fa-info-circle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                <p>Type at least 2 characters to search</p>
+            </div>
+        `;
+        return;
+    }
+    
+    const filtered = allFunds.filter(fund => 
+        fund.schemeName.toUpperCase().includes(searchTerm)
+    ).slice(0, 20);
+    
+    if (filtered.length === 0) {
+        fundsList.innerHTML = `
+            <div style="text-align: center; padding: 2rem; color: var(--gray);">
+                <i class="fas fa-search" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                <p>No funds found. Try a different search term.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    fundsList.innerHTML = `
+        <div style="display: grid; gap: 1rem;">
+            ${filtered.map(fund => `
+                <div class="fund-item" onclick="selectFund('${fund.schemeCode}')" 
+                     style="padding: 1rem; background: #F9FAFB; border-radius: 10px; cursor: pointer; 
+                            transition: all 0.3s ease; border: 2px solid transparent;">
+                    <div style="font-weight: 600; color: var(--dark); margin-bottom: 0.25rem;">
+                        ${fund.schemeName}
+                    </div>
+                    <div style="font-size: 0.875rem; color: var(--gray);">
+                        Click to analyze
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+    
+    // Add hover effect
+    document.querySelectorAll('.fund-item').forEach(item => {
+        item.addEventListener('mouseenter', function() {
+            this.style.background = 'white';
+            this.style.borderColor = '#10B981';
+            this.style.transform = 'translateX(10px)';
+        });
+        item.addEventListener('mouseleave', function() {
+            this.style.background = '#F9FAFB';
+            this.style.borderColor = 'transparent';
+            this.style.transform = 'translateX(0)';
+        });
+    });
+}
+
+async function selectFund(schemeCode) {
+    showLoading('Fetching fund details...');
+    
+    try {
+        const response = await fetch(`https://api.mfapi.in/mf/${schemeCode}`);
+        const data = await response.json();
+        
+        currentFund = data;
+        displayFundDetails(data);
+        hideLoading();
+        
+        // Scroll to details
+        document.getElementById('fundDetails').scrollIntoView({ behavior: 'smooth' });
+    } catch (error) {
+        console.error('Error:', error);
+        hideLoading();
+        alert('Error fetching fund details. Please try again.');
+    }
+}
+
+function displayFundDetails(data) {
+    const meta = data.meta;
+    const navData = data.data;
+    
+    // Show details section
+    document.getElementById('fundDetails').style.display = 'block';
+    
+    // Fund name and basic info
+    document.getElementById('fundName').textContent = meta.scheme_name;
+    document.getElementById('fundHouse').textContent = meta.fund_house;
+    document.getElementById('currentNav').textContent = '₹' + navData[0].nav;
+    document.getElementById('fundCategory').textContent = meta.scheme_category;
+    
+    // Calculate volatility and risk
+    const volatility = calculateVolatility(navData);
+    const riskLevel = classifyRisk(volatility);
+    
+    document.getElementById('riskBadge').innerHTML = `
+        <div style="display: inline-block; padding: 0.5rem 1rem; border-radius: 8px; 
+                    background: ${riskLevel.color}; color: white; font-weight: 600; font-size: 1.2rem;">
+            ${riskLevel.label}
+        </div>
+    `;
+    
+    // Calculate returns
+    const returns1y = calculateReturns(navData, 1);
+    const returns3y = calculateReturns(navData, 3);
+    const returns5y = calculateReturns(navData, 5);
+    
+    document.getElementById('returns1y').textContent = returns1y ? returns1y + '%' : 'N/A';
+    document.getElementById('returns3y').textContent = returns3y ? returns3y + '%' : 'N/A';
+    document.getElementById('returns5y').textContent = returns5y ? returns5y + '%' : 'N/A';
+    
+    // Display NAV history
+    const navTableBody = document.getElementById('navTableBody');
+    navTableBody.innerHTML = navData.slice(0, 30).map(item => `
+        <tr style="border-bottom: 1px solid #E5E7EB;">
+            <td style="padding: 1rem;">${item.date}</td>
+            <td style="padding: 1rem; text-align: right; font-weight: 600; color: #10B981;">
+                ₹${item.nav}
+            </td>
+        </tr>
+    `).join('');
+}
+
+function calculateVolatility(navData) {
+    try {
+        // Take last 90 days
+        const recentData = navData.slice(0, Math.min(90, navData.length));
+        
+        if (recentData.length < 30) {
+            return null; // Not enough data
+        }
+        
+        const returns = [];
+        
+        // Calculate daily returns
+        for (let i = 0; i < recentData.length - 1; i++) {
+            const currentNav = parseFloat(recentData[i].nav);
+            const previousNav = parseFloat(recentData[i + 1].nav);
+            
+            if (isNaN(currentNav) || isNaN(previousNav) || previousNav === 0) {
+                continue;
+            }
+            
+            const dailyReturn = ((currentNav - previousNav) / previousNav) * 100;
+            returns.push(dailyReturn);
+        }
+        
+        if (returns.length < 10) {
+            return null; // Not enough valid returns
+        }
+        
+        // Calculate standard deviation (volatility)
+        const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+        const squaredDiffs = returns.map(r => Math.pow(r - mean, 2));
+        const variance = squaredDiffs.reduce((a, b) => a + b, 0) / squaredDiffs.length;
+        const volatility = Math.sqrt(variance);
+        
+        return volatility;
+    } catch (error) {
+        console.error('Error calculating volatility:', error);
+        return null;
+    }
+}
+
+function classifyRisk(volatility) {
+    if (volatility === null || isNaN(volatility)) {
+        return { label: 'Unknown', color: '#6B7280' };
+    }
+    
+    // Risk classification based on volatility
+    // Low: < 1.5%, Medium: 1.5-3.5%, High: > 3.5%
+    if (volatility < 1.5) {
+        return { label: 'Low Risk', color: '#10B981' };
+    } else if (volatility < 3.5) {
+        return { label: 'Medium Risk', color: '#F59E0B' };
+    } else {
+        return { label: 'High Risk', color: '#EF4444' };
+    }
+}
+
+function calculateReturns(navData, years) {
+    try {
+        const currentNav = parseFloat(navData[0].nav);
+        const daysAgo = years * 365;
+        
+        // Find NAV from years ago
+        let pastNav = null;
+        for (let i = 0; i < navData.length; i++) {
+            const date = new Date(navData[i].date.split('-').reverse().join('-'));
+            const daysDiff = (new Date() - date) / (1000 * 60 * 60 * 24);
+            
+            if (daysDiff >= daysAgo) {
+                pastNav = parseFloat(navData[i].nav);
+                break;
+            }
+        }
+        
+        if (!pastNav) return null;
+        
+        const cagr = (Math.pow(currentNav / pastNav, 1 / years) - 1) * 100;
+        return cagr.toFixed(2);
+    } catch (error) {
+        return null;
+    }
+}
+</script>
+
+<style>
+.fund-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+#fundsList::-webkit-scrollbar {
+    width: 8px;
+}
+
+#fundsList::-webkit-scrollbar-track {
+    background: #F3F4F6;
+    border-radius: 4px;
+}
+
+#fundsList::-webkit-scrollbar-thumb {
+    background: #10B981;
+    border-radius: 4px;
+}
+
+#fundsList::-webkit-scrollbar-thumb:hover {
+    background: #059669;
+}
+</style>
+{% endblock %}

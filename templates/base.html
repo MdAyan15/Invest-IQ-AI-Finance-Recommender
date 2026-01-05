@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}InvestIQ - AI Financial Advisor{% endblock %}</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    {% if session.user_id %}
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-chart-line"></i>
+                <span>InvestIQ</span>
+            </div>
+            
+            <ul class="nav-menu">
+                <li><a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                    <i class="fas fa-home"></i> Dashboard
+                </a></li>
+                <li><a href="{{ url_for('savings') }}" class="nav-link {% if request.endpoint == 'savings' %}active{% endif %}">
+                    <i class="fas fa-piggy-bank"></i> Savings
+                </a></li>
+                <li><a href="{{ url_for('stocks') }}" class="nav-link {% if request.endpoint == 'stocks' %}active{% endif %}">
+                    <i class="fas fa-chart-bar"></i> Stocks
+                </a></li>
+                <li><a href="{{ url_for('mutual_funds') }}" class="nav-link {% if request.endpoint == 'mutual_funds' %}active{% endif %}">
+                    <i class="fas fa-briefcase"></i> Mutual Funds
+                </a></li>
+                <li><a href="{{ url_for('sip_calculator') }}" class="nav-link {% if request.endpoint == 'sip_calculator' %}active{% endif %}">
+                    <i class="fas fa-calculator"></i> SIP Calculator
+                </a></li>
+                <li><a href="{{ url_for('chatbot') }}" class="nav-link {% if request.endpoint == 'chatbot' %}active{% endif %}">
+                    <i class="fas fa-comments"></i> AI Chatbot
+                </a></li>
+            </ul>
+            
+            <div class="nav-actions">
+                <span class="user-name">
+                    <i class="fas fa-user-circle"></i> {{ session.user_name }}
+                </span>
+                <a href="{{ url_for('logout') }}" class="btn-logout">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+    
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container">
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }} fade-in">
+                        <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' if category == 'warning' else 'info-circle' }}"></i>
+                        <span>{{ message }}</span>
+                        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    
+    <!-- Main Content -->
+    <main class="main-content {% if not session.user_id %}auth-page{% endif %}">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2025 InvestIQ - AI Financial Advisor. All rights reserved.</p>
+            <p class="disclaimer">Disclaimer: Educational purposes only. Not financial advice.</p>
+        </div>
+    </footer>
+    
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

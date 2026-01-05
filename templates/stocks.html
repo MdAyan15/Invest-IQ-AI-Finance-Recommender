@@ -1,0 +1,450 @@
+{% extends "base.html" %}
+
+{% block title %}Stock Analyzer - InvestIQ{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem;">
+        <i class="fas fa-chart-bar"></i> Stock Risk Analyzer
+    </h1>
+    <p style="color: var(--gray); font-size: 1.1rem;">AI-Powered Stock Risk Analysis</p>
+</div>
+
+<!-- Analyze Individual Stock -->
+<div class="card">
+    <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #10B981, #059669);">
+            <i class="fas fa-search"></i>
+        </div>
+        <div class="card-title">Analyze Individual Stock</div>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+        <div class="form-group">
+            <label class="form-label">Select Stock (NIFTY 50)</label>
+            <select id="stockSelect" class="form-input">
+                <option value="">Choose a stock...</option>
+                <option value="RELIANCE.NS">Reliance Industries</option>
+                <option value="TCS.NS">Tata Consultancy Services</option>
+                <option value="HDFCBANK.NS">HDFC Bank</option>
+                <option value="INFY.NS">Infosys</option>
+                <option value="ICICIBANK.NS">ICICI Bank</option>
+                <option value="HINDUNILVR.NS">Hindustan Unilever</option>
+                <option value="ITC.NS">ITC</option>
+                <option value="SBIN.NS">State Bank of India</option>
+                <option value="BHARTIARTL.NS">Bharti Airtel</option>
+                <option value="KOTAKBANK.NS">Kotak Mahindra Bank</option>
+                <option value="LT.NS">Larsen & Toubro</option>
+                <option value="AXISBANK.NS">Axis Bank</option>
+                <option value="ASIANPAINT.NS">Asian Paints</option>
+                <option value="MARUTI.NS">Maruti Suzuki</option>
+                <option value="TITAN.NS">Titan Company</option>
+                <option value="SUNPHARMA.NS">Sun Pharma</option>
+                <option value="ULTRACEMCO.NS">UltraTech Cement</option>
+                <option value="NESTLEIND.NS">Nestle India</option>
+                <option value="WIPRO.NS">Wipro</option>
+                <option value="ADANIPORTS.NS">Adani Ports</option>
+            </select>
+        </div>
+        
+        <button onclick="analyzeStock()" class="btn btn-success" style="margin-top: 1.8rem;">
+            <i class="fas fa-chart-line"></i> Analyze
+        </button>
+    </div>
+</div>
+
+<!-- Stock Analysis Results -->
+<div id="stockResults" style="display: none; margin-top: 2rem;">
+    <div class="card">
+        <div class="card-header">
+            <div class="card-icon" style="background: linear-gradient(135deg, #3B82F6, #2563EB);">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="card-title" id="stockName">Stock Analysis</div>
+        </div>
+        
+        <!-- Risk Assessment -->
+        <div style="text-align: center; margin: 2rem 0;">
+            <div id="riskBadge" style="display: inline-block; padding: 1.5rem 3rem; border-radius: 15px; font-size: 1.8rem; font-weight: 800; color: white;">
+                Loading...
+            </div>
+        </div>
+        
+        <!-- Key Metrics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Current Price</div>
+                <div class="stat-value" id="currentPrice" style="color: #10B981;">-</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">RSI (14)</div>
+                <div class="stat-value" id="rsiValue" style="color: #3B82F6;">-</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">30-Day Volatility</div>
+                <div class="stat-value" id="volatility" style="color: #F59E0B;">-</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">Momentum</div>
+                <div class="stat-value" id="momentum" style="color: #8B5CF6;">-</div>
+            </div>
+        </div>
+        
+        <!-- Recommendation -->
+        <div id="recommendation" style="margin-top: 2rem; padding: 1.5rem; background: #F3F4F6; border-radius: 10px;">
+            <h4 style="margin-bottom: 1rem;">💡 Investment Recommendation</h4>
+            <p id="recommendationText" style="margin: 0; line-height: 1.6;"></p>
+        </div>
+    </div>
+</div>
+
+<!-- BULK ANALYSIS SECTION -->
+<div class="card" style="margin-top: 2rem;">
+    <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #F59E0B, #D97706);">
+            <i class="fas fa-layer-group"></i>
+        </div>
+        <div class="card-title">Bulk Analysis - NIFTY 50 Stocks</div>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 1rem;">
+        <div class="form-group">
+            <label class="form-label">Number of stocks to analyze</label>
+            <input type="range" id="bulkCount" min="5" max="20" step="5" value="10" class="range-slider" 
+                   oninput="document.getElementById('bulkCountValue').textContent = this.value">
+            <div style="display: flex; justify-content: space-between; margin-top: 0.5rem;">
+                <span style="color: var(--gray); font-size: 0.875rem;">5</span>
+                <span style="color: #10B981; font-weight: 700;" id="bulkCountValue">10</span>
+                <span style="color: var(--gray); font-size: 0.875rem;">20</span>
+            </div>
+        </div>
+        
+        <button onclick="bulkAnalyze()" class="btn btn-success" style="margin-top: 1.8rem;">
+            <i class="fas fa-rocket"></i> Analyze Stocks
+        </button>
+    </div>
+    
+    <div id="bulkProgress" style="display: none; margin-top: 1rem;">
+        <div style="background: #F3F4F6; border-radius: 10px; overflow: hidden;">
+            <div id="progressBar" style="height: 30px; background: linear-gradient(90deg, #10B981, #059669); 
+                                         width: 0%; transition: width 0.3s; display: flex; align-items: center; 
+                                         justify-content: center; color: white; font-weight: 600;"></div>
+        </div>
+        <p id="progressText" style="text-align: center; margin-top: 0.5rem; color: var(--gray);"></p>
+    </div>
+</div>
+
+<!-- BULK RESULTS -->
+<div id="bulkResults" style="display: none; margin-top: 2rem;">
+    <div class="card">
+        <div class="card-header">
+            <div class="card-icon" style="background: linear-gradient(135deg, #8B5CF6, #7C3AED);">
+                <i class="fas fa-table"></i>
+            </div>
+            <div class="card-title">Analysis Results</div>
+        </div>
+        
+        <!-- Summary Stats -->
+        <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 2rem;">
+            <div class="stat-card">
+                <div class="stat-label">Total Analyzed</div>
+                <div class="stat-value" id="totalCount" style="color: #3B82F6;">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Low Risk</div>
+                <div class="stat-value" id="lowCount" style="color: #10B981;">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Medium Risk</div>
+                <div class="stat-value" id="mediumCount" style="color: #F59E0B;">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">High Risk</div>
+                <div class="stat-value" id="highCount" style="color: #EF4444;">0</div>
+            </div>
+        </div>
+        
+        <!-- Filter Options -->
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+            <div class="form-group">
+                <label class="form-label">Filter by Risk Level</label>
+                <select id="riskFilter" class="form-input" onchange="filterResults()">
+                    <option value="all">All Stocks</option>
+                    <option value="Low Risk">Low Risk Only</option>
+                    <option value="Medium Risk">Medium Risk Only</option>
+                    <option value="High Risk">High Risk Only</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Sort By</label>
+                <select id="sortBy" class="form-input" onchange="filterResults()">
+                    <option value="risk">Risk Level</option>
+                    <option value="stock">Stock Name</option>
+                    <option value="volatility">Volatility</option>
+                    <option value="rsi">RSI</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Results Table -->
+        <div class="table-container" style="max-height: 500px; overflow: auto;">
+            <table id="resultsTable" style="width: 100%; border-collapse: collapse; min-width: 1000px;">
+                <thead style="position: sticky; top: 0; background: #F3F4F6; z-index: 10;">
+                    <tr>
+                        <th style="padding: 1rem; text-align: left; font-weight: 600;">Stock</th>
+                        <th style="padding: 1rem; text-align: right; font-weight: 600;">Price</th>
+                        <th style="padding: 1rem; text-align: center; font-weight: 600;">Risk</th>
+                        <th style="padding: 1rem; text-align: right; font-weight: 600;">Volatility</th>
+                        <th style="padding: 1rem; text-align: right; font-weight: 600;">RSI</th>
+                        <th style="padding: 1rem; text-align: right; font-weight: 600;">Momentum</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsTableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Information Card -->
+<div class="card" style="margin-top: 2rem; background: linear-gradient(135deg, #FEF3C7, #FDE68A);">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="font-size: 2rem; color: #D97706;">
+            <i class="fas fa-info-circle"></i>
+        </div>
+        <div>
+            <h4 style="color: #92400E; margin-bottom: 0.5rem;">⚠️ Disclaimer</h4>
+            <p style="color: #78350F; margin: 0;">This tool provides AI-powered analysis based on technical indicators. It is for educational purposes only and should not be considered as financial advice.</p>
+        </div>
+    </div>
+</div>
+
+<style>
+.range-slider {
+    width: 100%;
+    height: 8px;
+    border-radius: 5px;
+    background: linear-gradient(90deg, #10B981, #3B82F6);
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.range-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.range-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+}
+
+.range-slider::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    border: none;
+}
+</style>
+
+<script>
+const nifty50Stocks = [
+    { ticker: 'RELIANCE.NS', name: 'Reliance Industries' },
+    { ticker: 'TCS.NS', name: 'TCS' },
+    { ticker: 'HDFCBANK.NS', name: 'HDFC Bank' },
+    { ticker: 'INFY.NS', name: 'Infosys' },
+    { ticker: 'ICICIBANK.NS', name: 'ICICI Bank' },
+    { ticker: 'HINDUNILVR.NS', name: 'Hindustan Unilever' },
+    { ticker: 'ITC.NS', name: 'ITC' },
+    { ticker: 'SBIN.NS', name: 'SBI' },
+    { ticker: 'BHARTIARTL.NS', name: 'Bharti Airtel' },
+    { ticker: 'KOTAKBANK.NS', name: 'Kotak Bank' },
+    { ticker: 'LT.NS', name: 'L&T' },
+    { ticker: 'AXISBANK.NS', name: 'Axis Bank' },
+    { ticker: 'ASIANPAINT.NS', name: 'Asian Paints' },
+    { ticker: 'MARUTI.NS', name: 'Maruti Suzuki' },
+    { ticker: 'TITAN.NS', name: 'Titan' },
+    { ticker: 'SUNPHARMA.NS', name: 'Sun Pharma' },
+    { ticker: 'ULTRACEMCO.NS', name: 'UltraTech Cement' },
+    { ticker: 'NESTLEIND.NS', name: 'Nestle India' },
+    { ticker: 'WIPRO.NS', name: 'Wipro' },
+    { ticker: 'ADANIPORTS.NS', name: 'Adani Ports' }
+];
+
+let bulkResultsData = [];
+
+async function analyzeStock() {
+    const stockSelect = document.getElementById('stockSelect');
+    const ticker = stockSelect.value;
+    
+    if (!ticker) {
+        alert('Please select a stock');
+        return;
+    }
+    
+    const stockName = stockSelect.options[stockSelect.selectedIndex].text;
+    document.getElementById('stockName').textContent = stockName + ' Analysis';
+    
+    if (typeof showLoading === 'function') {
+        showLoading('Analyzing ' + stockName + ' with AI model...');
+    }
+    
+    document.getElementById('stockResults').style.display = 'block';
+    
+    try {
+        const response = await fetch('/api/analyze-stock', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ticker: ticker })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            displayAnalysis(result.data);
+        } else {
+            alert('Error: ' + result.error);
+            document.getElementById('stockResults').style.display = 'none';
+        }
+        
+        if (typeof hideLoading === 'function') {
+            hideLoading();
+        }
+        
+        document.getElementById('stockResults').scrollIntoView({ behavior: 'smooth' });
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to analyze stock. Please try again.');
+        if (typeof hideLoading === 'function') {
+            hideLoading();
+        }
+    }
+}
+
+function displayAnalysis(data) {
+    document.getElementById('riskBadge').textContent = data.risk;
+    document.getElementById('riskBadge').style.background = data.riskColor;
+    document.getElementById('currentPrice').textContent = '₹' + data.price.toFixed(2);
+    document.getElementById('rsiValue').textContent = data.rsi.toFixed(2);
+    document.getElementById('volatility').textContent = data.volatility.toFixed(2) + '%';
+    document.getElementById('momentum').textContent = data.momentum.toFixed(2) + '%';
+    document.getElementById('recommendationText').textContent = data.recommendation;
+    
+    const momentumEl = document.getElementById('momentum');
+    momentumEl.style.color = data.momentum > 0 ? '#10B981' : '#EF4444';
+}
+
+async function bulkAnalyze() {
+    const count = parseInt(document.getElementById('bulkCount').value);
+    const stocksToAnalyze = nifty50Stocks.slice(0, count);
+    
+    document.getElementById('bulkProgress').style.display = 'block';
+    document.getElementById('bulkResults').style.display = 'none';
+    bulkResultsData = [];
+    
+    for (let i = 0; i < stocksToAnalyze.length; i++) {
+        const stock = stocksToAnalyze[i];
+        const progress = ((i + 1) / stocksToAnalyze.length) * 100;
+        
+        document.getElementById('progressBar').style.width = progress + '%';
+        document.getElementById('progressBar').textContent = Math.round(progress) + '%';
+        document.getElementById('progressText').textContent = `Analyzing ${stock.name}... (${i + 1}/${stocksToAnalyze.length})`;
+        
+        try {
+            const response = await fetch('/api/analyze-stock', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ticker: stock.ticker })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                bulkResultsData.push({
+                    stock: stock.name,
+                    ...result.data
+                });
+            }
+        } catch (error) {
+            console.error(`Error analyzing ${stock.name}:`, error);
+        }
+    }
+    
+    document.getElementById('bulkProgress').style.display = 'none';
+    displayBulkResults();
+}
+
+function displayBulkResults() {
+    document.getElementById('bulkResults').style.display = 'block';
+    
+    const lowCount = bulkResultsData.filter(d => d.risk === 'Low Risk').length;
+    const mediumCount = bulkResultsData.filter(d => d.risk === 'Medium Risk').length;
+    const highCount = bulkResultsData.filter(d => d.risk === 'High Risk').length;
+    
+    document.getElementById('totalCount').textContent = bulkResultsData.length;
+    document.getElementById('lowCount').textContent = lowCount;
+    document.getElementById('mediumCount').textContent = mediumCount;
+    document.getElementById('highCount').textContent = highCount;
+    
+    filterResults();
+    document.getElementById('bulkResults').scrollIntoView({ behavior: 'smooth' });
+}
+
+function filterResults() {
+    const riskFilter = document.getElementById('riskFilter').value;
+    const sortBy = document.getElementById('sortBy').value;
+    
+    let filtered = [...bulkResultsData];
+    
+    if (riskFilter !== 'all') {
+        filtered = filtered.filter(d => d.risk === riskFilter);
+    }
+    
+    filtered.sort((a, b) => {
+        if (sortBy === 'risk') {
+            const riskOrder = { 'Low Risk': 0, 'Medium Risk': 1, 'High Risk': 2 };
+            return riskOrder[a.risk] - riskOrder[b.risk];
+        } else if (sortBy === 'stock') {
+            return a.stock.localeCompare(b.stock);
+        } else if (sortBy === 'volatility') {
+            return b.volatility - a.volatility;
+        } else if (sortBy === 'rsi') {
+            return b.rsi - a.rsi;
+        }
+    });
+    
+    const tbody = document.getElementById('resultsTableBody');
+    tbody.innerHTML = filtered.map(d => {
+        const riskColors = { 'Low Risk': '#D1FAE5', 'Medium Risk': '#FEF3C7', 'High Risk': '#FEE2E2' };
+        return `
+            <tr style="border-bottom: 1px solid #E5E7EB; background: ${riskColors[d.risk]};">
+                <td style="padding: 1rem; font-weight: 600;">${d.stock}</td>
+                <td style="padding: 1rem; text-align: right;">₹${d.price.toFixed(2)}</td>
+                <td style="padding: 1rem; text-align: center;">
+                    <span style="padding: 0.5rem 1rem; border-radius: 8px; background: ${d.riskColor}; color: white; font-weight: 600; font-size: 0.875rem;">
+                        ${d.risk}
+                    </span>
+                </td>
+                <td style="padding: 1rem; text-align: right;">${d.volatility.toFixed(2)}%</td>
+                <td style="padding: 1rem; text-align: right;">${d.rsi.toFixed(2)}</td>
+                <td style="padding: 1rem; text-align: right; color: ${d.momentum > 0 ? '#10B981' : '#EF4444'};">${d.momentum.toFixed(2)}%</td>
+            </tr>
+        `;
+    }).join('');
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,458 @@
+{% extends "base.html" %}
+
+{% block title %}Register - InvestIQ{% endblock %}
+
+{% block extra_head %}
+<style>
+.auth-split-container {
+    display: flex;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #F0FDF4 0%, #D1FAE5 50%, #A7F3D0 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-split-container::before {
+    content: '';
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
+    border-radius: 50%;
+    top: -200px;
+    left: -200px;
+    animation: float 8s ease-in-out infinite;
+}
+
+.auth-split-container::after {
+    content: '';
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(5, 150, 105, 0.08) 0%, transparent 70%);
+    border-radius: 50%;
+    bottom: -150px;
+    right: -150px;
+    animation: float 10s ease-in-out infinite reverse;
+}
+
+.auth-visual-section {
+    flex: 1;
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-visual-section::before {
+    content: '';
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 50%;
+    top: -150px;
+    right: -150px;
+    animation: pulse 4s ease-in-out infinite;
+}
+
+.auth-visual-section::after {
+    content: '';
+    position: absolute;
+    width: 250px;
+    height: 250px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 50%;
+    bottom: -80px;
+    left: -80px;
+    animation: pulse 6s ease-in-out infinite reverse;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 0.3; }
+    50% { transform: scale(1.1); opacity: 0.5; }
+}
+
+.visual-content {
+    text-align: center;
+    color: white;
+    z-index: 1;
+}
+
+.coin-animation {
+    width: 280px;
+    height: 280px;
+    margin: 2rem auto;
+    position: relative;
+}
+
+.coin {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(145deg, #FFD700, #FFA500);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    animation: floatCoin 3s ease-in-out infinite;
+}
+
+.coin:nth-child(1) {
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    animation-delay: 0s;
+}
+
+.coin:nth-child(2) {
+    top: 50%;
+    left: 20px;
+    transform: translateY(-50%);
+    animation-delay: 0.5s;
+}
+
+.coin:nth-child(3) {
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+    animation-delay: 1s;
+}
+
+.coin:nth-child(4) {
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    animation-delay: 1.5s;
+}
+
+@keyframes floatCoin {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-15px) rotate(180deg); }
+}
+
+.center-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100px;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    animation: rotate 10s linear infinite;
+}
+
+@keyframes rotate {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.visual-content h2 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.visual-content p {
+    font-size: 1.1rem;
+    opacity: 0.95;
+    line-height: 1.8;
+}
+
+.benefit-list {
+    margin-top: 3rem;
+    text-align: left;
+    max-width: 400px;
+}
+
+.benefit-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    animation: fadeInRight 0.6s ease forwards;
+    opacity: 0;
+}
+
+.benefit-item:nth-child(1) { animation-delay: 0.2s; }
+.benefit-item:nth-child(2) { animation-delay: 0.4s; }
+.benefit-item:nth-child(3) { animation-delay: 0.6s; }
+
+@keyframes fadeInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.benefit-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.auth-form-section {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    position: relative;
+    z-index: 1;
+}
+
+.auth-container-new {
+    max-width: 450px;
+    width: 100%;
+    animation: fadeInUp 0.6s ease;
+    background: rgba(255, 255, 255, 0.98);
+    padding: 3rem;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Investment Growth Animation */
+.growth-chart {
+    width: 280px;
+    height: 200px;
+    margin: 2rem auto;
+    position: relative;
+    display: none;
+}
+
+.growth-bar {
+    position: absolute;
+    bottom: 0;
+    width: 35px;
+    background: linear-gradient(to top, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.6));
+    border-radius: 6px 6px 0 0;
+    animation: growHeight 2.5s ease-in-out infinite;
+}
+
+.growth-bar:nth-child(1) { left: 15px; height: 60px; animation-delay: 0s; }
+.growth-bar:nth-child(2) { left: 65px; height: 90px; animation-delay: 0.3s; }
+.growth-bar:nth-child(3) { left: 115px; height: 110px; animation-delay: 0.6s; }
+.growth-bar:nth-child(4) { left: 165px; height: 140px; animation-delay: 0.9s; }
+.growth-bar:nth-child(5) { left: 215px; height: 170px; animation-delay: 1.2s; }
+
+@keyframes growHeight {
+    0%, 100% { transform: scaleY(0.9); opacity: 0.7; }
+    50% { transform: scaleY(1); opacity: 1; }
+}
+
+@media (max-width: 968px) {
+    .auth-split-container {
+        flex-direction: column-reverse;
+    }
+    
+    .auth-visual-section {
+        min-height: 40vh;
+    }
+    
+    .coin-animation {
+        width: 200px;
+        height: 200px;
+    }
+    
+    .coin {
+        width: 45px;
+        height: 45px;
+        font-size: 1.3rem;
+    }
+    
+    .center-icon {
+        width: 70px;
+        height: 70px;
+        font-size: 2rem;
+    }
+    
+    .benefit-list {
+        display: none;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-split-container">
+    <div class="auth-form-section">
+        <div class="auth-container-new">
+            <div class="auth-header">
+                <div style="text-align: center; margin-bottom: 1.5rem;">
+                    <div style="display: inline-block; padding: 1rem; background: linear-gradient(135deg, #10B981, #059669); border-radius: 15px; margin-bottom: 1rem;">
+                        <i class="fas fa-user-plus" style="font-size: 2rem; color: white;"></i>
+                    </div>
+                    <h1>Join InvestIQ</h1>
+                    <p>Start your investment journey today</p>
+                </div>
+            </div>
+            
+            <form method="POST" action="{{ url_for('register') }}">
+                <div class="form-group">
+                    <label class="form-label" for="name">
+                        <i class="fas fa-user"></i> Full Name
+                    </label>
+                    <input 
+                        type="text" 
+                        id="name" 
+                        name="name" 
+                        class="form-input" 
+                        placeholder="John Doe"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="email">
+                        <i class="fas fa-envelope"></i> Email Address
+                    </label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        class="form-input" 
+                        placeholder="your@email.com"
+                        required
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="age">
+                        <i class="fas fa-calendar"></i> Age
+                    </label>
+                    <input 
+                        type="number" 
+                        id="age" 
+                        name="age" 
+                        class="form-input" 
+                        placeholder="25"
+                        min="18"
+                        max="100"
+                        required
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="password">
+                        <i class="fas fa-lock"></i> Password
+                    </label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        class="form-input" 
+                        placeholder="••••••••"
+                        minlength="6"
+                        required
+                    >
+                </div>
+                
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-rocket"></i> Create Account
+                </button>
+            </form>
+            
+            <div class="auth-footer">
+                Already have an account? 
+                <a href="{{ url_for('login') }}">Login here</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="auth-visual-section">
+        <div class="visual-content">
+            <h2>Start Growing Today</h2>
+            <p>Join thousands of smart investors</p>
+            
+            <div class="coin-animation">
+                <div class="coin">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="coin">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="coin">
+                    <i class="fas fa-piggy-bank"></i>
+                </div>
+                <div class="coin">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <div class="center-icon">
+                    <i class="fas fa-rocket"></i>
+                </div>
+            </div>
+
+            <div class="growth-chart">
+                <div class="growth-bar"></div>
+                <div class="growth-bar"></div>
+                <div class="growth-bar"></div>
+                <div class="growth-bar"></div>
+                <div class="growth-bar"></div>
+            </div>
+            
+            <div class="benefit-list">
+                <div class="benefit-item">
+                    <div class="benefit-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div>
+                        <strong>Learn & Grow</strong>
+                        <p style="font-size: 0.9rem; opacity: 0.9; margin: 0;">Educational resources for beginners</p>
+                    </div>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <div>
+                        <strong>Smart Investments</strong>
+                        <p style="font-size: 0.9rem; opacity: 0.9; margin: 0;">Diversify your portfolio easily</p>
+                    </div>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div>
+                        <strong>Join Community</strong>
+                        <p style="font-size: 0.9rem; opacity: 0.9; margin: 0;">Connect with fellow investors</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
